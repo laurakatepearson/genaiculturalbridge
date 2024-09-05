@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Cultural Bridge: Interactive Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const scenarios = [
+            {
+                country: "China",
+                situation: "You're meeting with a potential business partner, Mr. Li, in Beijing.",
+                prompt: "你好！我是李先生。我们能谈谈你们公司的新产品吗？",
+                translation: "Hello! I am Mr. Li. Can we talk about your company's new product?",
+                culturalContext: "In Chinese business culture, it's common to use formal titles and surnames. The direct approach to discussing business is also typical.",
+                options: [
+                    { text: "Sure, let's dive right in! What do you want to know?", score: 1 },
+                    { text: "Hello, Mr. Li. I'd be honored to discuss our new product with you. Shall we begin with an overview?", score: 3 },
+                    { text: "Hi there! Before we start, would you like some coffee or tea?", score: 2 },
+                ],
+                feedback: [
+                    "This response is too casual for Chinese business culture. A more formal approach would be better.",
+                    "Excellent choice! This response shows respect and formality while also being open to discussion.",
+                    "While offering refreshments is polite, it's better to focus on business first in Chinese business culture.",
+                ],
+            },
+            {
+                country: "Brazil",
+                situation: "You're attending a business lunch with a potential client, Maria, in São Paulo.",
+                prompt: "Oi! Que bom te conhecer! Vamos almoçar e conversar sobre negócios?",
+                translation: "Hi! It's great to meet you! Shall we have lunch and talk business?",
+                culturalContext: "In Brazilian business culture, building personal relationships is crucial. Business discussions often happen over meals in a more relaxed setting.",
+                options: [
+                    { text: "Hello Maria, let's get straight to business. I have a presentation prepared.", score: 1 },
+                    { text: "Hi Maria! I'd love to have lunch. Tell me, how long have you been with your company?", score: 3 },
+                    { text: "Nice to meet you! I'm starving, where's the best place to eat around here?", score: 2 },
+                ],
+                feedback: [
+                    "This approach is too direct for Brazilian business culture. Building rapport over lunch is important before discussing business.",
+                    "Great choice! This response shows interest in building a personal relationship, which is valued in Brazilian business culture.",
+                    "While showing interest in local cuisine is good, it's better to let your host guide the conversation and suggest restaurants.",
+                ],
+            },
+        ];
+
+        const GenAIAssistant = ({ onTranslate, onExplain }) => (
+            <div className="bg-blue-100 p-4 rounded-lg mb-4">
+                <h2 className="text-xl font-bold mb-2">GenAI Assistant</h2>
+                <button onClick={onTranslate} className="bg-blue-500 text-white px-4 py-2 rounded mr-2">Translate</button>
+                <button onClick={onExplain} className="bg-green-500 text-white px-4 py-2 rounded">Explain Cultural Context</button>
+            </div>
+        );
+
+        const ScenarioPrompt = ({ country, situation, prompt }) => (
+            <div className="bg-yellow-100 p-4 rounded-lg mb-4">
+                <h2 className="text-xl font-bold mb-2">Scenario: {country}</h2>
+                <p className="mb-2">{situation}</p>
+                <p className="font-bold">{prompt}</p>
+            </div>
+        );
+
+        const ResponseOptions = ({ options, onSelect }) => (
+            <div className="bg-gray-100 p-4 rounded-lg">
+                <h2 className="text-xl font-bold mb-2">Your Response</h2>
+                {options.map((option, index) => (
+                    <button 
+                        key={index} 
+                        onClick={() => onSelect(index)} 
+                        className="block w-full text-left bg-white hover:bg-gray-200 p-2 rounded mb-2"
+                    >
+                        {option.text}
+                    </button>
+                ))}
+            </div>
+        );
+
+        const Feedback = ({ message, score }) => (
+            <div className="bg-green-100 p-4 rounded-lg mt-4">
+                <h2 className="text-xl font-bold mb-2">Feedback</h2>
+                <p>{message}</p>
+                <p className="mt-2">Score: {score}/3</p>
+            </div>
+        );
+
+        const App = () => {
+            const [currentScenario, setCurrentScenario] = useState(0);
+            const [feedback, setFeedback] = useState('');
+            const [score, setScore] = useState(0);
+            const [totalScore, setTotalScore] = useState(0);
+            const [gameOver, setGameOver] = useState(false);
+
+            const handleTranslate = () => {
+                setFeedback(scenarios[currentScenario].translation);
+            };
+
+            const handleExplain = () => {
+                setFeedback(scenarios[currentScenario].culturalContext);
+            };
+
+            const handleSelect = (index) => {
+                const newScore = scenarios[currentScenario].options[index].score;
+                setScore(newScore);
+                setTotalScore(totalScore + newScore);
+                setFeedback(scenarios[currentScenario].feedback[index]);
+                
+                if (currentScenario < scenarios.length - 1) {
+                    setTimeout(() => {
+                        setCurrentScenario(currentScenario + 1);
+                        setFeedback('');
+                    }, 3000);
+                } else {
+                    setGameOver(true);
+                }
+            };
+
+            const scenario = scenarios[currentScenario];
+
+            return (
+                <div className="container mx-auto p-4">
+                    <h1 className="text-2xl font-bold mb-4">GenAI Cultural Bridge: Interactive Game</h1>
+                    {!gameOver ? (
+                        <>
+                            <ScenarioPrompt country={scenario.country} situation={scenario.situation} prompt={scenario.prompt} />
+                            <GenAIAssistant onTranslate={handleTranslate} onExplain={handleExplain} />
+                            <ResponseOptions options={scenario.options} onSelect={handleSelect} />
+                            {feedback && <Feedback message={feedback} score={score} />}
+                        </>
+                    ) : (
+                        <div className="bg-blue-100 p-4 rounded-lg">
+                            <h2 className="text-xl font-bold mb-2">Game Over</h2>
+                            <p>Your total score: {totalScore}/{scenarios.length * 3}</p>
+                            <p className="mt-2">
+                                {totalScore === scenarios.length * 3 ? "Perfect score! You're a cross-cultural communication expert!" :
+                                 totalScore >= scenarios.length * 2 ? "Great job! You have strong cross-cultural communication skills." :
+                                 "Good effort! Keep learning about different cultures to improve your communication skills."}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
